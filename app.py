@@ -11,13 +11,43 @@ def home():
 @app.route('/memo', methods=['POST'])
 def post_article():
     # 1. 클라이언트로부터 데이터를 받기
+    url_receive = request.form['url_give']
+    comment_receive = request.form['comment_give']
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
+    }
+    reponse = requests.get(url_receive, headers=headers)
+    SOUP = BeautifulSoup(reponse.text, 'html.parser')
+
     # 2. meta tag를 스크래핑하기
+    og_title = SOUP.select_one('meta[property="og:title"]')
+    title = og_title['content']  # 태그의 속성값을 가져오기
+    og_image = SOUP.select_one('meta[property="og:image"]')
+    image = og_image['content']
+    og_description = SOUP.select_one('meta[property="og:description"]')
+    description = og_description['content']
+
     # 3. mongoDB에 데이터 넣기
+    article = {
+        'url': url_receive,
+        'title': title,
+        'image_url': image,
+        'description': description,
+        'comment': comment_receive,
+    }
+    db.alonememo.insert_one(article)
     return jsonify({'result': 'success', 'msg': 'POST 연결되었습니다!'})
 @app.route('/memo', methods=['GET'])
 def read_articles():
     # 1. mongoDB에서 _id 값을 제외한 모든 데이터 조회해오기(Read)
+    articles = list(db.alonememo.find({}, {'_id':0}))
+
     # 2. articles라는 키 값으로 articles 정보 보내주기
-    return jsonify({'result': 'success', 'msg': 'GET 연결되었습니다!'})
+    result = {
+        'result': 'success',
+        'articles': articles,
+    }
+
+    return jsonify(result)
 if __name__ == '__main__':
     app.run('0.0.0.0', port=5000, debug=True)

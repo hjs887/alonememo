@@ -62,17 +62,27 @@
             }
 
             function postArticle() {
+                var url = $('#post-url').val();
+                var comment = $('#post-comment').val();
+
                 $.ajax({
                     type: "POST",
                     url: "/memo",
-                    data: {},
+                    data: {url_give: url, comment_give: comment},
                     success: function (response) { // 성공하면
                         if (response["result"] == "success") {
-                            alert(response["msg"]);
+                            window.location.reload();
+                        } else {
+                            alert('오류입니다.');
                         }
                     }
                 })
             }
+
+            $(document).ready(function () {
+                $("#orders-box").html("");
+                showArticles();
+            });
 
             function showArticles() {
                 $.ajax({
@@ -81,7 +91,26 @@
                     data: {},
                     success: function (response) {
                         if (response["result"] == "success") {
-                            alert(response["msg"]);
+                            let articles = response['articles'];
+                            console.log(articles);
+                            for (let i = 0; i < articles.length; i++) {
+                                let article = articles[i];
+                                let title = article['title'];
+                                let comment = article['comment'];
+                                let description = article['description'];
+                                let url = article['url'];
+                                let image_url = article['image_url'];
+                                let tempHtml = ` <div class="card">
+                    <img class="card-img-top"
+                         src="${image_url}"
+                         alt="Card image cap">
+                    <div class="card-body">
+                        <a href="${url}" class="card-title">${title}</a>
+                        <p class="card-text">${description}</p>
+                        <p class="card-text comment">${comment}</p>
+                    </div>`;
+                                $('#cards-box').append(tempHtml);
+                            }
                         }
                     }
                 })
